@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embercade — Smoke Shop &amp; Delivery</title>
+<meta name="description" content="Embercade is a lowkey, modern smoke shop with fast discreet local delivery — glass, vapes, papers, and accessories.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0C0A08',
+          surface: '#17130F',
+          card: '#1E1812',
+          ember: '#D97706',
+          emberLight: '#F59E0B',
+          sage: '#8A9A6F',
+          text: '#F5F1EA',
+          muted: '#A8A198',
+          line: 'rgba(245,241,234,0.08)',
+        },
+        fontFamily: {
+          heading: ['DM Sans', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+        },
+        boxShadow: {
+          ember: '0 0 40px rgba(217,119,6,0.18)',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  html { scroll-behavior: smooth; }
+  body { background: #0C0A08; }
+
+  ::selection { background: rgba(217,119,6,0.35); color: #F5F1EA; }
+
+  .grain {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.035; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .ember-text {
+    background: linear-gradient(120deg, #F59E0B, #D97706 55%, #8A9A6F);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .glass {
+    background: rgba(30,24,18,0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  [data-reveal].in-view { opacity: 1; transform: translateY(0); }
+
+  .ember-dot { box-shadow: 0 0 0 0 rgba(217,119,6,0.6); animation: pulse-dot 2.2s infinite; }
+  @keyframes pulse-dot {
+    0% { box-shadow: 0 0 0 0 rgba(217,119,6,0.55); }
+    70% { box-shadow: 0 0 0 10px rgba(217,119,6,0); }
+    100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+  }
+
+  .radius-ring { border: 1px solid rgba(217,119,6,0.35); border-radius: 9999px; animation: ring-expand 3.2s ease-out infinite; }
+  .radius-ring.delay-1 { animation-delay: 1.05s; }
+  .radius-ring.delay-2 { animation-delay: 2.1s; }
+  @keyframes ring-expand {
+    0% { transform: scale(0.55); opacity: 0.9; }
+    100% { transform: scale(1.15); opacity: 0; }
+  }
+
+  .marquee-track { animation: marquee 26s linear infinite; }
+  .marquee-track:hover { animation-play-state: paused; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .cat-tab[aria-selected="true"] { background: #D97706; color: #0C0A08; }
+  .cat-card { display: none; }
+  .cat-card.is-visible { display: flex; }
+
+  .accordion-panel { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .accordion-item[data-open="true"] .accordion-panel { max-height: 240px; }
+  .accordion-item[data-open="true"] .accordion-chevron { transform: rotate(180deg); }
+  .accordion-chevron { transition: transform 0.25s ease; }
+
+  #cartDrawer { transform: translateX(100%); transition: transform 0.35s ease; }
+  #cartDrawer.open { transform: translateX(0); }
+  #cartOverlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+  #cartOverlay.open { opacity: 1; pointer-events: auto; }
+
+  #ageGate { transition: opacity 0.4s ease; }
+  #ageGate.hidden-gate { opacity: 0; pointer-events: none; }
+
+  .toast { transform: translateY(140%); transition: transform 0.35s ease; }
+  .toast.show { transform: translateY(0); }
+
+  #backToTop { opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(8px); }
+  #backToTop.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+  input[type="text"]:focus-visible, input[type="email"]:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid #D97706; outline-offset: 2px;
+  }
+</style>
+</head>
+<body class="bg-bg font-body text-text antialiased relative">
+
+<div class="grain"></div>
+
+<!-- ============ AGE GATE ============ -->
+<div id="ageGate" class="fixed inset-0 z-[100] flex items-center justify-center bg-bg/97 backdrop-blur-xl px-6" role="dialog" aria-modal="true" aria-labelledby="ageGateTitle">
+  <div class="max-w-md w-full text-center">
+    <div class="w-14 h-14 rounded-2xl bg-ember/10 border border-ember/30 flex items-center justify-center mx-auto mb-6">
+      <svg class="w-7 h-7 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <h1 id="ageGateTitle" class="font-heading text-2xl font-bold mb-3">Age Verification</h1>
+    <p class="text-muted text-sm leading-relaxed mb-8">
+      Embercade sells adult accessories. You must be <span class="text-text font-medium">21 years or older</span> to enter this site. Valid government ID is required at delivery.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button id="ageEnter" class="cursor-pointer bg-ember hover:bg-emberLight text-bg font-semibold px-8 py-3.5 rounded-full transition-colors duration-200">I'm 21 or older</button>
+      <button id="ageLeave" class="cursor-pointer border border-line hover:border-muted text-muted px-8 py-3.5 rounded-full transition-colors duration-200">I'm under 21</button>
+    </div>
+    <p class="text-xs text-muted/70 mt-6">By entering, you agree to our Terms and confirm you are of legal age in your jurisdiction.</p>
+  </div>
+</div>
+
+<!-- ============ NAV ============ -->
+<header class="fixed top-4 left-4 right-4 z-40">
+  <nav class="max-w-6xl mx-auto glass rounded-2xl border border-line px-5 py-3 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 font-heading font-bold text-lg cursor-pointer">
+      <span class="w-2 h-2 rounded-full bg-ember ember-dot"></span>
+      Ember<span class="ember-text">cade</span>
+    </a>
+
+    <div class="hidden md:flex items-center gap-7 text-sm">
+      <a href="#shop" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer">Shop</a>
+      <a href="#delivery" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer">Delivery</a>
+      <a href="#reviews" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer">Reviews</a>
+      <a href="#faq" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer">FAQ</a>
+      <a href="#visit" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer">Visit</a>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div id="statusPill" class="hidden sm:flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-line">
+        <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-sage"></span>
+        <span id="statusText" class="text-muted">Checking hours…</span>
+      </div>
+      <button id="cartToggle" class="relative cursor-pointer w-10 h-10 rounded-full border border-line hover:border-ember/50 flex items-center justify-center transition-colors duration-200" aria-label="Open cart">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.708 2.602-7.202.245-1.006-.52-1.983-1.554-1.983H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+        <span id="cartCount" class="absolute -top-1 -right-1 bg-ember text-bg text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] px-1 rounded-full flex items-center justify-center leading-none py-1">0</span>
+      </button>
+      <a href="#delivery" class="hidden sm:inline-block cursor-pointer bg-ember hover:bg-emberLight text-bg font-semibold text-sm px-5 py-2.5 rounded-full transition-colors duration-200">Order Delivery</a>
+      <button id="mobileToggle" class="md:hidden cursor-pointer w-10 h-10 flex items-center justify-center" aria-label="Toggle menu" aria-expanded="false">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="mobileMenu" class="hidden md:hidden max-w-6xl mx-auto glass rounded-2xl border border-line mt-2 px-5 py-4 flex flex-col gap-4 text-sm">
+    <a href="#shop" class="text-muted hover:text-text cursor-pointer">Shop</a>
+    <a href="#delivery" class="text-muted hover:text-text cursor-pointer">Delivery</a>
+    <a href="#reviews" class="text-muted hover:text-text cursor-pointer">Reviews</a>
+    <a href="#faq" class="text-muted hover:text-text cursor-pointer">FAQ</a>
+    <a href="#visit" class="text-muted hover:text-text cursor-pointer">Visit</a>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section id="top" class="relative pt-40 pb-24 px-6 overflow-hidden">
+  <div class="absolute -top-20 right-[-10%] w-[520px] h-[520px] bg-ember/10 rounded-full blur-[120px]"></div>
+  <div class="max-w-6xl mx-auto relative">
+    <div class="max-w-2xl" data-reveal>
+      <span class="inline-flex items-center gap-2 text-xs font-medium text-sage border border-sage/30 bg-sage/5 px-3 py-1.5 rounded-full mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-sage"></span> Now delivering — discreet, unmarked packaging
+      </span>
+      <h1 class="font-heading text-4xl md:text-6xl font-bold leading-[1.05] mb-6">
+        Good gear, <span class="ember-text">no fuss.</span><br> Delivered lowkey.
+      </h1>
+      <p class="text-muted text-lg leading-relaxed mb-9 max-w-lg">
+        Glass, vapes, papers, and accessories — curated by people who actually use them. Order online, we verify ID at the door, done in under 30.
+      </p>
+
+      <form id="zipForm" class="flex flex-col sm:flex-row gap-3 mb-4" autocomplete="off">
+        <label for="zipInput" class="sr-only">Enter your ZIP code</label>
+        <div class="flex-1 flex items-center gap-2 bg-card border border-line rounded-full px-5 py-3.5 focus-within:border-ember/60 transition-colors">
+          <svg class="w-4.5 h-4.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+          <input id="zipInput" type="text" inputmode="numeric" maxlength="5" placeholder="Enter your ZIP code" class="bg-transparent flex-1 outline-none text-sm placeholder-muted">
+        </div>
+        <button type="submit" class="cursor-pointer bg-ember hover:bg-emberLight text-bg font-semibold px-7 py-3.5 rounded-full transition-colors duration-200 whitespace-nowrap">Check Delivery</button>
+      </form>
+      <p id="zipResult" class="text-sm min-h-[1.25rem]" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <!-- Delivery ticker -->
+  <div class="mt-16 border-y border-line py-3 overflow-hidden relative">
+    <div class="flex marquee-track whitespace-nowrap text-sm text-muted">
+      <div class="flex items-center gap-10 pr-10">
+        <span>🚚 Avg delivery time: 27 min</span>
+        <span>📍 Now serving Downtown, Riverside &amp; Eastside</span>
+        <span>🪪 ID checked at every drop-off</span>
+        <span>📦 Discreet, unmarked packaging</span>
+        <span>⭐ 4.8/5 from 2,300+ local orders</span>
+      </div>
+      <div class="flex items-center gap-10 pr-10" aria-hidden="true">
+        <span>🚚 Avg delivery time: 27 min</span>
+        <span>📍 Now serving Downtown, Riverside &amp; Eastside</span>
+        <span>🪪 ID checked at every drop-off</span>
+        <span>📦 Discreet, unmarked packaging</span>
+        <span>⭐ 4.8/5 from 2,300+ local orders</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CATEGORIES ============ -->
+<section id="shop" class="py-20 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-end justify-between mb-10 flex-wrap gap-4" data-reveal>
+      <div>
+        <p class="text-ember text-sm font-medium mb-2">Browse</p>
+        <h2 class="font-heading text-3xl md:text-4xl font-bold">Shop by category</h2>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-16" data-reveal>
+      <a href="#featured" class="group flex flex-col items-center text-center gap-3 bg-card border border-line rounded-2xl p-5 hover:border-ember/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-xl bg-ember/10 flex items-center justify-center group-hover:bg-ember/20 transition-colors"><svg class="w-5.5 h-5.5 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z"/></svg></div>
+        <span class="text-sm font-medium">Vapes &amp; Devices</span>
+      </a>
+      <a href="#featured" class="group flex flex-col items-center text-center gap-3 bg-card border border-line rounded-2xl p-5 hover:border-ember/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-xl bg-ember/10 flex items-center justify-center group-hover:bg-ember/20 transition-colors"><svg class="w-5.5 h-5.5 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg></div>
+        <span class="text-sm font-medium">Glass &amp; Pipes</span>
+      </a>
+      <a href="#featured" class="group flex flex-col items-center text-center gap-3 bg-card border border-line rounded-2xl p-5 hover:border-ember/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-xl bg-ember/10 flex items-center justify-center group-hover:bg-ember/20 transition-colors"><svg class="w-5.5 h-5.5 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H15a2.25 2.25 0 00-2.25 2.25v6.75m0-16.5v16.5m0 0h-3.75m3.75 0H15"/></svg></div>
+        <span class="text-sm font-medium">Papers &amp; Wraps</span>
+      </a>
+      <a href="#featured" class="group flex flex-col items-center text-center gap-3 bg-card border border-line rounded-2xl p-5 hover:border-ember/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-xl bg-ember/10 flex items-center justify-center group-hover:bg-ember/20 transition-colors"><svg class="w-5.5 h-5.5 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-.513m14.095-5.13l1.41-.513M5.106 17.785l1.15-.964m11.49-9.642l1.149-.964M7.5 4.21l.865 1.32m7.27 11.94l.865 1.319m-13.5-11.32l1.28.858m11.965 6.464l1.28.858"/></svg></div>
+        <span class="text-sm font-medium">Grinders</span>
+      </a>
+      <a href="#featured" class="group flex flex-col items-center text-center gap-3 bg-card border border-line rounded-2xl p-5 hover:border-ember/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-xl bg-ember/10 flex items-center justify-center group-hover:bg-ember/20 transition-colors"><svg class="w-5.5 h-5.5 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg></div>
+        <span class="text-sm font-medium">Lighters &amp; Torches</span>
+      </a>
+      <a href="#featured" class="group flex flex-col items-center text-center gap-3 bg-card border border-line rounded-2xl p-5 hover:border-ember/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-xl bg-ember/10 flex items-center justify-center group-hover:bg-ember/20 transition-colors"><svg class="w-5.5 h-5.5 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5m4.75-11.396a24.301 24.301 0 014.5 0M14.25 3.104v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg></div>
+        <span class="text-sm font-medium">Hemp &amp; Wellness</span>
+      </a>
+    </div>
+
+    <!-- Featured products -->
+    <div id="featured" class="flex items-center justify-between flex-wrap gap-4 mb-6" data-reveal>
+      <h3 class="font-heading text-2xl font-bold">Featured this week</h3>
+      <div id="catTabs" role="tablist" class="flex gap-2 bg-card border border-line rounded-full p-1 text-sm">
+        <button class="cat-tab cursor-pointer px-4 py-1.5 rounded-full text-muted transition-colors duration-200" data-cat="all" role="tab" aria-selected="true">All</button>
+        <button class="cat-tab cursor-pointer px-4 py-1.5 rounded-full text-muted transition-colors duration-200" data-cat="vapes" role="tab" aria-selected="false">Vapes</button>
+        <button class="cat-tab cursor-pointer px-4 py-1.5 rounded-full text-muted transition-colors duration-200" data-cat="glass" role="tab" aria-selected="false">Glass</button>
+        <button class="cat-tab cursor-pointer px-4 py-1.5 rounded-full text-muted transition-colors duration-200" data-cat="papers" role="tab" aria-selected="false">Papers</button>
+        <button class="cat-tab cursor-pointer px-4 py-1.5 rounded-full text-muted transition-colors duration-200" data-cat="accessories" role="tab" aria-selected="false">Accessories</button>
+      </div>
+    </div>
+
+    <div id="productGrid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5" data-reveal>
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ============ DELIVERY ============ -->
+<section id="delivery" class="py-24 px-6 bg-surface/60 border-y border-line">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-14 items-center">
+      <div data-reveal>
+        <p class="text-ember text-sm font-medium mb-3">Delivery</p>
+        <h2 class="font-heading text-3xl md:text-4xl font-bold mb-6">Fast, discreet, on your time</h2>
+        <p class="text-muted leading-relaxed mb-10 max-w-lg">
+          Order from your couch, we bring it to your door. No branded boxes, no loud logos — just a plain package and a friendly driver who checks ID.
+        </p>
+
+        <div class="space-y-6">
+          <div class="flex gap-4">
+            <div class="w-10 h-10 rounded-full bg-ember/10 text-ember flex items-center justify-center font-heading font-bold shrink-0">1</div>
+            <div>
+              <h4 class="font-semibold mb-1">Order online</h4>
+              <p class="text-muted text-sm">Pick your items, add to cart, checkout in under a minute.</p>
+            </div>
+          </div>
+          <div class="flex gap-4">
+            <div class="w-10 h-10 rounded-full bg-ember/10 text-ember flex items-center justify-center font-heading font-bold shrink-0">2</div>
+            <div>
+              <h4 class="font-semibold mb-1">We verify ID at the door</h4>
+              <p class="text-muted text-sm">Every driver checks a valid government ID before handoff. 21+ only, no exceptions.</p>
+            </div>
+          </div>
+          <div class="flex gap-4">
+            <div class="w-10 h-10 rounded-full bg-ember/10 text-ember flex items-center justify-center font-heading font-bold shrink-0">3</div>
+            <div>
+              <h4 class="font-semibold mb-1">Delivered lowkey</h4>
+              <p class="text-muted text-sm">Plain packaging, contactless drop-off available, avg. 27 min in-zone.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-line">
+          <div>
+            <div class="font-heading text-2xl font-bold ember-text">27 min</div>
+            <div class="text-muted text-xs mt-1">avg delivery</div>
+          </div>
+          <div>
+            <div class="font-heading text-2xl font-bold ember-text">$35</div>
+            <div class="text-muted text-xs mt-1">min. order</div>
+          </div>
+          <div>
+            <div class="font-heading text-2xl font-bold ember-text">10am–10pm</div>
+            <div class="text-muted text-xs mt-1">daily hours</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative" data-reveal>
+        <div class="aspect-square rounded-3xl bg-card border border-line flex items-center justify-center relative overflow-hidden">
+          <div class="radius-ring w-40 h-40 absolute"></div>
+          <div class="radius-ring delay-1 w-40 h-40 absolute"></div>
+          <div class="radius-ring delay-2 w-40 h-40 absolute"></div>
+          <div class="w-16 h-16 rounded-full bg-ember flex items-center justify-center relative z-10 shadow-ember">
+            <svg class="w-8 h-8 text-bg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 0h-12"/></svg>
+          </div>
+          <span class="absolute top-6 left-8 w-2 h-2 rounded-full bg-sage ember-dot"></span>
+          <span class="absolute bottom-10 right-10 text-xs text-muted glass px-3 py-1.5 rounded-full border border-line">~2.1 mi away</span>
+        </div>
+        <p class="text-center text-xs text-muted mt-4">Live delivery radius — illustrative, not a real-time map</p>
+      </div>
+    </div>
+
+    <!-- Zip checker card -->
+    <div class="mt-16 bg-card border border-line rounded-3xl p-8 md:p-10 grid md:grid-cols-2 gap-8 items-center" data-reveal>
+      <div>
+        <h3 class="font-heading text-xl font-bold mb-2">Check your delivery zone</h3>
+        <p class="text-muted text-sm">We currently deliver to select ZIP codes near our shop. Enter yours to see if you're in range.</p>
+      </div>
+      <form id="zipFormDelivery" class="flex flex-col sm:flex-row gap-3" autocomplete="off">
+        <label for="zipInput2" class="sr-only">Enter your ZIP code</label>
+        <input id="zipInput2" type="text" inputmode="numeric" maxlength="5" placeholder="e.g. 94110" class="flex-1 bg-bg border border-line rounded-full px-5 py-3 text-sm outline-none focus:border-ember/60 placeholder-muted">
+        <button type="submit" class="cursor-pointer bg-ember hover:bg-emberLight text-bg font-semibold px-6 py-3 rounded-full transition-colors duration-200 whitespace-nowrap">Check ZIP</button>
+      </form>
+    </div>
+    <p id="zipResult2" class="text-sm mt-3" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ============ REVIEWS ============ -->
+<section id="reviews" class="py-24 px-6">
+  <div class="max-w-4xl mx-auto text-center">
+    <p class="text-ember text-sm font-medium mb-3" data-reveal>Reviews</p>
+    <h2 class="font-heading text-3xl md:text-4xl font-bold mb-14" data-reveal>What the neighborhood says</h2>
+
+    <div class="relative bg-card border border-line rounded-3xl p-10 md:p-14 min-h-[220px]" data-reveal>
+      <div id="testimonialTrack"></div>
+      <div class="flex justify-center gap-2 mt-8" id="testimonialDots"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" class="py-24 px-6 bg-surface/60 border-y border-line">
+  <div class="max-w-3xl mx-auto">
+    <p class="text-ember text-sm font-medium mb-3" data-reveal>FAQ</p>
+    <h2 class="font-heading text-3xl md:text-4xl font-bold mb-12" data-reveal>Delivery, answered</h2>
+
+    <div id="faqList" class="space-y-3" data-reveal>
+      <div class="accordion-item bg-card border border-line rounded-2xl overflow-hidden" data-open="false">
+        <button class="accordion-trigger w-full cursor-pointer flex items-center justify-between px-6 py-5 text-left font-medium">
+          Do I need to be present to receive my order?
+          <svg class="accordion-chevron w-5 h-5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="accordion-panel px-6"><p class="text-muted text-sm pb-5">Yes. Since we carry age-restricted products, an adult 21+ must be present with valid government ID at drop-off. We can't leave orders unattended.</p></div>
+      </div>
+      <div class="accordion-item bg-card border border-line rounded-2xl overflow-hidden" data-open="false">
+        <button class="accordion-trigger w-full cursor-pointer flex items-center justify-between px-6 py-5 text-left font-medium">
+          What areas do you deliver to?
+          <svg class="accordion-chevron w-5 h-5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="accordion-panel px-6"><p class="text-muted text-sm pb-5">We currently serve a handful of ZIP codes within about 5 miles of the shop. Use the ZIP checker above to see if you're in range — we're expanding the zone monthly.</p></div>
+      </div>
+      <div class="accordion-item bg-card border border-line rounded-2xl overflow-hidden" data-open="false">
+        <button class="accordion-trigger w-full cursor-pointer flex items-center justify-between px-6 py-5 text-left font-medium">
+          Is the packaging discreet?
+          <svg class="accordion-chevron w-5 h-5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="accordion-panel px-6"><p class="text-muted text-sm pb-5">Always. Everything ships in a plain, unmarked box or bag — no branding, no indication of contents.</p></div>
+      </div>
+      <div class="accordion-item bg-card border border-line rounded-2xl overflow-hidden" data-open="false">
+        <button class="accordion-trigger w-full cursor-pointer flex items-center justify-between px-6 py-5 text-left font-medium">
+          What's the minimum order and fee?
+          <svg class="accordion-chevron w-5 h-5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="accordion-panel px-6"><p class="text-muted text-sm pb-5">$35 minimum, flat $4.99 delivery fee. Orders over $75 deliver free within our core zone.</p></div>
+      </div>
+      <div class="accordion-item bg-card border border-line rounded-2xl overflow-hidden" data-open="false">
+        <button class="accordion-trigger w-full cursor-pointer flex items-center justify-between px-6 py-5 text-left font-medium">
+          Can I track my delivery?
+          <svg class="accordion-chevron w-5 h-5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="accordion-panel px-6"><p class="text-muted text-sm pb-5">You'll get a text with live driver tracking once your order is out, plus a heads-up 5 minutes before arrival.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VISIT / NEWSLETTER ============ -->
+<section id="visit" class="py-24 px-6">
+  <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
+    <div class="bg-card border border-line rounded-3xl p-8 md:p-10" data-reveal>
+      <h3 class="font-heading text-xl font-bold mb-6">Visit the shop</h3>
+      <ul class="space-y-4 text-sm">
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-ember shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+          <span class="text-muted">412 Foundry Street, Unit B — open 10am to 10pm daily</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-ember shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-muted">In-store pickup ready in 10 minutes, order ahead online</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-ember shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          <span class="text-muted">21+ only — valid ID checked at entry and at delivery</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="bg-card border border-line rounded-3xl p-8 md:p-10" data-reveal>
+      <h3 class="font-heading text-xl font-bold mb-2">Get the drop</h3>
+      <p class="text-muted text-sm mb-6">Restock alerts, delivery-zone expansions, and first dibs on new arrivals. No spam, unsubscribe anytime.</p>
+      <form id="newsletterForm" class="flex flex-col sm:flex-row gap-3" autocomplete="off">
+        <label for="newsletterEmail" class="sr-only">Email address</label>
+        <input id="newsletterEmail" type="email" required placeholder="you@email.com" class="flex-1 bg-bg border border-line rounded-full px-5 py-3 text-sm outline-none focus:border-ember/60 placeholder-muted">
+        <button type="submit" class="cursor-pointer bg-ember hover:bg-emberLight text-bg font-semibold px-6 py-3 rounded-full transition-colors duration-200 whitespace-nowrap">Notify me</button>
+      </form>
+      <p id="newsletterMsg" class="text-sm mt-3 text-sage" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="py-14 px-6 border-t border-line">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+      <a href="#top" class="flex items-center gap-2 font-heading font-bold text-lg cursor-pointer">
+        <span class="w-2 h-2 rounded-full bg-ember"></span> Embercade
+      </a>
+      <div class="flex gap-4">
+        <a href="#" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer" aria-label="Instagram">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.332.014 7.052.072 2.695.272.273 2.69.073 7.052.014 8.332 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.332 23.986 8.741 24 12 24s3.668-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.668-.072-4.948-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        </a>
+        <a href="#" class="text-muted hover:text-text transition-colors duration-200 cursor-pointer" aria-label="Twitter">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="border-t border-line pt-8 text-xs text-muted leading-relaxed space-y-2">
+      <p>© 2026 Embercade. All rights reserved. For adult use only — you must be 21 years of age or older to purchase.</p>
+      <p>Valid government-issued ID is required upon pickup and delivery. Products and delivery availability are subject to local and state regulations. This is a demo storefront built to showcase interactive UI patterns — not a real, operating business.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ CART DRAWER ============ -->
+<div id="cartOverlay" class="fixed inset-0 bg-black/60 z-40"></div>
+<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-surface border-l border-line z-50 flex flex-col" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-line">
+    <h2 id="cartTitle" class="font-heading font-bold text-lg">Your Cart</h2>
+    <button id="cartClose" class="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full hover:bg-card transition-colors" aria-label="Close cart">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div id="cartItems" class="flex-1 overflow-y-auto px-6 py-4 space-y-4"></div>
+  <div class="px-6 py-5 border-t border-line">
+    <div class="flex items-center justify-between text-sm text-muted mb-1">
+      <span>Subtotal</span>
+      <span id="cartSubtotal">$0.00</span>
+    </div>
+    <p class="text-xs text-muted mb-4">Delivery fee &amp; ID check applied at checkout.</p>
+    <button id="checkoutBtn" class="w-full cursor-pointer bg-ember hover:bg-emberLight text-bg font-semibold py-3.5 rounded-full transition-colors duration-200">Checkout</button>
+  </div>
+</aside>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="toast fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-card border border-ember/30 text-sm px-5 py-3 rounded-full shadow-ember flex items-center gap-2">
+  <svg class="w-4 h-4 text-ember" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  <span id="toastMsg">Added to cart</span>
+</div>
+
+<!-- ============ BACK TO TOP ============ -->
+<button id="backToTop" class="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-card border border-line hover:border-ember/50 flex items-center justify-center transition-colors duration-200 cursor-pointer" aria-label="Back to top">
+  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"/></svg>
+</button>
+
+<script>
+  // ---------- Data ----------
+  const PRODUCTS = [
+    { id: 'p1', name: 'Aurora Bubbler', cat: 'glass', price: 48, badge: 'Bestseller', icon: '🫧' },
+    { id: 'p2', name: 'Compact Vape Pen', cat: 'vapes', price: 32, badge: 'New', icon: '🔋' },
+    { id: 'p3', name: 'Unbleached Rolling Papers (3pk)', cat: 'papers', price: 6, badge: null, icon: '📄' },
+    { id: 'p4', name: 'Titanium Grinder', cat: 'accessories', price: 24, badge: null, icon: '⚙️' },
+    { id: 'p5', name: 'Torch Lighter', cat: 'accessories', price: 18, badge: null, icon: '🔥' },
+    { id: 'p6', name: 'Beaker Base Piece', cat: 'glass', price: 65, badge: 'Bestseller', icon: '🧪' },
+    { id: 'p7', name: 'Pod Vape Starter Kit', cat: 'vapes', price: 40, badge: null, icon: '💨' },
+    { id: 'p8', name: 'Hemp Wraps (5pk)', cat: 'papers', price: 9, badge: 'New', icon: '🌿' },
+  ];
+
+  const SERVICED_ZIPS = new Set(['94110','94103','94107','94114','94117','10001','10002','10003','60601','60614']);
+
+  const TESTIMONIALS = [
+    { quote: "Ordered at 9pm on a Tuesday, driver was at my door in 24 minutes. Package looked like nothing — just a plain bag.", name: 'J. Alvarez', meta: 'Riverside · verified delivery' },
+    { quote: "The in-store staff actually know their glass. Asked three questions and got real answers, not a sales pitch.", name: 'M. Okafor', meta: 'Downtown · in-store' },
+    { quote: "Appreciate that they actually check ID every single time. Feels like a shop that takes it seriously.", name: 'T. Nguyen', meta: 'Eastside · verified delivery' },
+    { quote: "Zip checker told me right away I was out of range — no annoying surprise at checkout. Small thing, big deal.", name: 'S. Brennan', meta: 'Uptown · in-store' },
+  ];
+
+  // ---------- Age Gate ----------
+  const ageGate = document.getElementById('ageGate');
+  const ageEnter = document.getElementById('ageEnter');
+  const ageLeave = document.getElementById('ageLeave');
+
+  function closeAgeGate() {
+    ageGate.classList.add('hidden-gate');
+    setTimeout(() => { ageGate.style.display = 'none'; }, 400);
+    document.body.style.overflow = '';
+  }
+
+  try {
+    if (sessionStorage.getItem('embercade_age_verified') === 'true') {
+      closeAgeGate();
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
+  } catch (e) {
+    document.body.style.overflow = 'hidden';
+  }
+
+  ageEnter.addEventListener('click', () => {
+    try { sessionStorage.setItem('embercade_age_verified', 'true'); } catch (e) {}
+    closeAgeGate();
+  });
+  ageLeave.addEventListener('click', () => {
+    ageGate.innerHTML = '<div class="max-w-md w-full text-center px-6"><h1 class="font-heading text-2xl font-bold mb-3">You must be 21+</h1><p class="text-muted text-sm">This site is restricted to adults 21 years of age or older. Please come back when you meet the age requirement.</p></div>';
+  });
+
+  // ---------- Mobile menu ----------
+  const mobileToggle = document.getElementById('mobileToggle');
+  const mobileMenu = document.getElementById('mobileMenu');
+  mobileToggle.addEventListener('click', () => {
+    const isHidden = mobileMenu.classList.toggle('hidden');
+    mobileToggle.setAttribute('aria-expanded', String(!isHidden));
+  });
+  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.add('hidden')));
+
+  // ---------- Open/closed status ----------
+  function updateStatus() {
+    const now = new Date();
+    const hour = now.getHours();
+    const open = hour >= 10 && hour < 22;
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    if (open) {
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-sage ember-dot';
+      text.textContent = `Open now · until 10:00 PM`;
+      text.className = 'text-text';
+    } else {
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-muted';
+      text.textContent = `Closed · opens 10:00 AM`;
+      text.className = 'text-muted';
+    }
+  }
+  updateStatus();
+
+  // ---------- ZIP checker ----------
+  function checkZip(value, resultEl) {
+    const zip = value.trim();
+    if (!/^\d{5}$/.test(zip)) {
+      resultEl.textContent = 'Enter a valid 5-digit ZIP code.';
+      resultEl.className = 'text-sm mt-3 text-muted';
+      return;
+    }
+    if (SERVICED_ZIPS.has(zip)) {
+      const eta = 20 + Math.floor(Math.random() * 15);
+      resultEl.textContent = `✅ You're in range — estimated delivery in ~${eta} minutes.`;
+      resultEl.className = 'text-sm mt-3 text-sage';
+    } else {
+      resultEl.textContent = `Not in our delivery zone yet — in-store pickup is available at 412 Foundry Street.`;
+      resultEl.className = 'text-sm mt-3 text-ember';
+    }
+  }
+
+  document.getElementById('zipForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const resultEl = document.getElementById('zipResult');
+    resultEl.className = 'text-sm min-h-[1.25rem]';
+    checkZip(document.getElementById('zipInput').value, resultEl);
+  });
+  document.getElementById('zipFormDelivery').addEventListener('submit', (e) => {
+    e.preventDefault();
+    checkZip(document.getElementById('zipInput2').value, document.getElementById('zipResult2'));
+  });
+
+  // ---------- Product grid + filtering ----------
+  const productGrid = document.getElementById('productGrid');
+  function renderProducts() {
+    productGrid.innerHTML = PRODUCTS.map(p => `
+      <div class="cat-card is-visible flex-col bg-card border border-line rounded-2xl p-5 hover:border-ember/40 transition-colors duration-200" data-cat="${p.cat}">
+        <div class="aspect-square rounded-xl bg-bg/60 border border-line flex items-center justify-center text-4xl mb-4 relative">
+          ${p.icon}
+          ${p.badge ? `<span class="absolute top-2 left-2 text-[10px] font-semibold px-2 py-1 rounded-full bg-ember/15 text-ember">${p.badge}</span>` : ''}
+        </div>
+        <h4 class="font-medium text-sm mb-1">${p.name}</h4>
+        <div class="flex items-center justify-between mt-3">
+          <span class="font-heading font-bold text-ember">$${p.price.toFixed(2)}</span>
+          <button class="add-to-cart cursor-pointer text-xs font-semibold bg-ember/10 hover:bg-ember hover:text-bg text-ember px-3 py-2 rounded-full transition-colors duration-200" data-id="${p.id}">Add</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  renderProducts();
+
+  document.getElementById('catTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.cat-tab');
+    if (!btn) return;
+    document.querySelectorAll('.cat-tab').forEach(t => t.setAttribute('aria-selected', 'false'));
+    btn.setAttribute('aria-selected', 'true');
+    const cat = btn.dataset.cat;
+    document.querySelectorAll('.cat-card').forEach(card => {
+      card.classList.toggle('is-visible', cat === 'all' || card.dataset.cat === cat);
+    });
+  });
+
+  // ---------- Cart ----------
+  let cart = {};
+  const cartCountEl = document.getElementById('cartCount');
+  const cartItemsEl = document.getElementById('cartItems');
+  const cartSubtotalEl = document.getElementById('cartSubtotal');
+
+  function renderCart() {
+    const ids = Object.keys(cart);
+    if (ids.length === 0) {
+      cartItemsEl.innerHTML = '<p class="text-muted text-sm text-center py-10">Your cart is empty.</p>';
+    } else {
+      cartItemsEl.innerHTML = ids.map(id => {
+        const p = PRODUCTS.find(x => x.id === id);
+        const qty = cart[id];
+        return `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-lg bg-bg/60 border border-line flex items-center justify-center text-xl shrink-0">${p.icon}</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">${p.name}</p>
+              <p class="text-xs text-muted">$${p.price.toFixed(2)}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="qty-minus cursor-pointer w-6 h-6 rounded-full border border-line flex items-center justify-center text-xs" data-id="${id}">−</button>
+              <span class="text-sm w-4 text-center">${qty}</span>
+              <button class="qty-plus cursor-pointer w-6 h-6 rounded-full border border-line flex items-center justify-center text-xs" data-id="${id}">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    const total = ids.reduce((sum, id) => sum + PRODUCTS.find(x => x.id === id).price * cart[id], 0);
+    cartSubtotalEl.textContent = `$${total.toFixed(2)}`;
+    const count = ids.reduce((sum, id) => sum + cart[id], 0);
+    cartCountEl.textContent = count;
+  }
+  renderCart();
+
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+  }
+
+  productGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.add-to-cart');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    cart[id] = (cart[id] || 0) + 1;
+    renderCart();
+    const p = PRODUCTS.find(x => x.id === id);
+    showToast(`${p.name} added to cart`);
+  });
+
+  cartItemsEl.addEventListener('click', (e) => {
+    const plus = e.target.closest('.qty-plus');
+    const minus = e.target.closest('.qty-minus');
+    if (plus) {
+      cart[plus.dataset.id]++;
+    } else if (minus) {
+      const id = minus.dataset.id;
+      cart[id]--;
+      if (cart[id] <= 0) delete cart[id];
+    } else {
+      return;
+    }
+    renderCart();
+  });
+
+  const cartDrawer = document.getElementById('cartDrawer');
+  const cartOverlay = document.getElementById('cartOverlay');
+  function openCart() { cartDrawer.classList.add('open'); cartOverlay.classList.add('open'); }
+  function closeCart() { cartDrawer.classList.remove('open'); cartOverlay.classList.remove('open'); }
+  document.getElementById('cartToggle').addEventListener('click', openCart);
+  document.getElementById('cartClose').addEventListener('click', closeCart);
+  cartOverlay.addEventListener('click', closeCart);
+  document.getElementById('checkoutBtn').addEventListener('click', () => {
+    if (Object.keys(cart).length === 0) { showToast('Your cart is empty'); return; }
+    showToast('Demo checkout — connect a payment processor here');
+  });
+
+  // ---------- FAQ accordion ----------
+  document.getElementById('faqList').addEventListener('click', (e) => {
+    const trigger = e.target.closest('.accordion-trigger');
+    if (!trigger) return;
+    const item = trigger.closest('.accordion-item');
+    const isOpen = item.dataset.open === 'true';
+    document.querySelectorAll('.accordion-item').forEach(i => i.dataset.open = 'false');
+    item.dataset.open = isOpen ? 'false' : 'true';
+  });
+
+  // ---------- Testimonials carousel ----------
+  const track = document.getElementById('testimonialTrack');
+  const dotsEl = document.getElementById('testimonialDots');
+  let tIndex = 0;
+  let tTimer;
+
+  function renderTestimonial() {
+    const t = TESTIMONIALS[tIndex];
+    track.innerHTML = `
+      <p class="font-heading text-lg md:text-xl leading-relaxed mb-6">"${t.quote}"</p>
+      <p class="text-sm text-muted">${t.name} · ${t.meta}</p>
+    `;
+    dotsEl.innerHTML = TESTIMONIALS.map((_, i) =>
+      `<button class="t-dot cursor-pointer w-2 h-2 rounded-full transition-colors duration-200 ${i === tIndex ? 'bg-ember' : 'bg-line'}" data-i="${i}" aria-label="Show testimonial ${i + 1}"></button>`
+    ).join('');
+  }
+  function nextTestimonial() { tIndex = (tIndex + 1) % TESTIMONIALS.length; renderTestimonial(); }
+  function startAutoplay() { tTimer = setInterval(nextTestimonial, 5000); }
+  function stopAutoplay() { clearInterval(tTimer); }
+
+  renderTestimonial();
+  startAutoplay();
+  dotsEl.parentElement.addEventListener('mouseenter', stopAutoplay);
+  dotsEl.parentElement.addEventListener('mouseleave', startAutoplay);
+  dotsEl.addEventListener('click', (e) => {
+    const dot = e.target.closest('.t-dot');
+    if (!dot) return;
+    tIndex = Number(dot.dataset.i);
+    renderTestimonial();
+  });
+
+  // ---------- Newsletter ----------
+  document.getElementById('newsletterForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('newsletterEmail').value.trim();
+    const msg = document.getElementById('newsletterMsg');
+    if (!email) return;
+    msg.textContent = `You're on the list, ${email.split('@')[0]}. Watch for the next drop.`;
+    document.getElementById('newsletterEmail').value = '';
+  });
+
+  // ---------- Scroll reveal ----------
+  const revealEls = document.querySelectorAll('[data-reveal]');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+
+  // ---------- Back to top ----------
+  const backToTop = document.getElementById('backToTop');
+  window.addEventListener('scroll', () => {
+    backToTop.classList.toggle('show', window.scrollY > 600);
+  }, { passive: true });
+  backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // ---------- Escape closes cart ----------
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeCart();
+  });
+</script>
+</body>
+</html>
