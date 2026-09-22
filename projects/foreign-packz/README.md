@@ -19,7 +19,8 @@ npm run typecheck      # tsc --noEmit
 
 The prototype has no server, so it builds to plain static files (`output: 'export'`) and
 can be served from any static host: `npx serve out` or `python3 -m http.server` inside
-`out/`. `build:preview` additionally renames Next's `_next` asset directory to `assets`
+`out/`. **[docs/DEPLOY.md](docs/DEPLOY.md)** covers putting it online, including the one
+setting that breaks deployments (`BASE_PATH`). `build:preview` additionally renames Next's `_next` asset directory to `assets`
 and drops the legacy `noModule` polyfill chunk, for hosts that reject underscore-prefixed
 paths. A production build would drop the static export entirely, because age gating,
 inventory checks, order persistence and every permission check have to run on a server.
