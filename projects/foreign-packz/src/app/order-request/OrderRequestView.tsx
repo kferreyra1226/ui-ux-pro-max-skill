@@ -1,5 +1,8 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import { DeliveryStatusChip, OrderStatusChip } from '@/components/ui/Badge';
 import { Notice } from '@/components/ui/Notice';
@@ -8,34 +11,34 @@ import { LEGAL, SUPPORT } from '@/lib/config';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { getOrderByReference } from '@/lib/mock/orders';
 
-export const metadata: Metadata = {
-  title: 'Order request received',
-  description: 'Your order request has been received and is awaiting review by the business.',
-};
-
 /**
  * Order request confirmation and status.
  *
  * The word "confirmed" never appears as this page's status. A freshly submitted request is
  * always "Order request received - awaiting review" until a human owner accepts it.
  * PRODUCTION: read the real request from the secure database by reference, behind an
- * authenticated or signed link so one customer cannot read another's order.
+ * authenticated or signed link so one customer cannot read another's order. A request
+ * reference must never be guessable, and one customer must never be able to read another's
+ * order by changing the value in the URL.
  */
-export default async function OrderRequestPage({
-  params, searchParams,
-}: {
-  params: Promise<{ reference: string }>;
-  searchParams: Promise<{ fulfillment?: string }>;
-}) {
-  const { reference } = await params;
-  const { fulfillment } = await searchParams;
+export function OrderRequestView() {
+  const searchParams = useSearchParams();
+  const reference = searchParams.get('ref') ?? '[REQUEST NUMBER]';
+  const fulfillment = searchParams.get('fulfillment') ?? undefined;
+
   // A reference that matches a mock record renders that record; anything else renders a
   // freshly submitted request, which is what a customer sees right after checkout.
   const existing = getOrderByReference(reference);
   const isDelivery = fulfillment === 'delivery-request' || Boolean(existing?.delivery);
 
   const status = existing?.status ?? 'request-received';
-  const submittedAt = existing?.submittedAt ?? new Date().toISOString();
+
+  // Rendered after mount so the submission time matches the visitor's own clock rather
+  // than the moment this page was built.
+  const [submittedAt, setSubmittedAt] = useState<string | null>(existing?.submittedAt ?? null);
+  useEffect(() => {
+    if (!existing) setSubmittedAt(new Date().toISOString());
+  }, [existing]);
 
   return (
     <div className="fp-shell py-10 md:py-16">
@@ -59,7 +62,9 @@ export default async function OrderRequestPage({
           </div>
           <div>
             <dt className="text-[11px] uppercase tracking-[0.14em] text-chrome-dim">Submitted</dt>
-            <dd className="mt-1 text-[15px] text-bone/90">{formatDateTime(submittedAt)}</dd>
+            <dd className="mt-1 text-[15px] text-bone/90">
+              {submittedAt ? formatDateTime(submittedAt) : 'Just now'}
+            </dd>
           </div>
         </dl>
 

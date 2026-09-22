@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { cx } from '@/lib/format';
+import { cx, isRoute } from '@/lib/format';
 
 /**
  * Sticky bottom tab bar, iPhone first.
@@ -30,7 +30,9 @@ export function MobileTabBar() {
     >
       <ul className="grid grid-cols-5">
         {items.map((item) => {
-          const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+          const active = item.href === '/'
+            ? isRoute(pathname, '/')
+            : pathname.startsWith(item.href);
           return (
             <li key={item.href}>
               <Link

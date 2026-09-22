@@ -7,7 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { AVAILABILITY } from '@/lib/mock/availability';
 import { deliveryMessage, deliveryTone } from '@/lib/availability';
 import { BRAND } from '@/lib/config';
-import { cx } from '@/lib/format';
+import { cx, isRoute } from '@/lib/format';
 
 const NAV = [
   { href: '/shop', label: 'Shop' },
@@ -53,7 +53,7 @@ export function Header() {
 
           <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
             {NAV.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = isRoute(pathname, item.href) || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { ShopFilters } from '@/components/commerce/ShopFilters';
 import { AgeRequired } from '@/components/commerce/AgeRequired';
 import { Notice } from '@/components/ui/Notice';
@@ -18,14 +19,12 @@ export const metadata: Metadata = {
  * The 21+ gate is enforced by AgeRequired below, which renders nothing until the visitor
  * has confirmed. PRODUCTION: also gate this route in middleware so cannabis markup is
  * never sent to an unconfirmed client, and read stock from the live inventory system.
+ *
+ * The category and sort deep links (?category=flower, ?sort=newest) are read inside
+ * ShopFilters with useSearchParams, so this page stays a static document with no server
+ * render per request.
  */
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; sort?: string }>;
-}) {
-  const params = await searchParams;
-
+export default function ShopPage() {
   return (
     <div className="fp-shell py-10 md:py-16">
       <header className="mb-8 max-w-3xl">
@@ -53,13 +52,9 @@ export default async function ShopPage({
         title={`This menu is for adults ${BRAND.minimumAge}+`}
         body="Confirm your age to view cannabis products. Accessories and apparel are available without age confirmation."
       >
-        <ShopFilters
-          products={PUBLIC_PRODUCTS}
-          initialCategory={params.category}
-          initialSort={params.sort}
-          brands={[...BRANDS]}
-          formats={[...FORMATS]}
-        />
+        <Suspense fallback={<div className="fp-card grid min-h-[280px] place-items-center p-10 text-[13px] uppercase tracking-[0.16em] text-chrome-dim">Loading menu&hellip;</div>}>
+          <ShopFilters products={PUBLIC_PRODUCTS} brands={[...BRANDS]} formats={[...FORMATS]} />
+        </Suspense>
       </AgeRequired>
 
       <div className="mt-12 grid gap-3 md:grid-cols-2">

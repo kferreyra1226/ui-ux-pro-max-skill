@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { AdminSessionProvider, useAdminSession } from '@/context/AdminSessionContext';
 import { ButtonLink } from '@/components/ui/Button';
+import { isRoute } from '@/lib/format';
 
 /**
  * Admin layout.
@@ -26,7 +27,7 @@ function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { signedIn } = useAdminSession();
 
-  if (pathname === '/admin/login') return <>{children}</>;
+  if (isRoute(pathname, '/admin/login')) return <>{children}</>;
 
   if (!signedIn) {
     return (

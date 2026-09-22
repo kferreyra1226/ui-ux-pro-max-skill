@@ -26,3 +26,13 @@ export function formatBytes(bytes: number): string {
 export function cx(...values: (string | false | null | undefined)[]): string {
   return values.filter(Boolean).join(' ');
 }
+
+/**
+ * Compares a pathname to a route, ignoring a trailing slash.
+ * The static preview build emits directory-style URLs ("/admin/login/"), so an exact
+ * string comparison against "/admin/login" would silently fail.
+ */
+export function isRoute(pathname: string, route: string): boolean {
+  const strip = (v: string) => (v.length > 1 ? v.replace(/\/+$/, '') : v);
+  return strip(pathname) === strip(route);
+}

@@ -128,7 +128,7 @@ export function CheckoutFlow() {
     // inventory, persists the request and writes an audit row. It never confirms anything.
     const reference = generateReference();
     clear();
-    router.push(`/order-request/${reference}?fulfillment=${form.fulfillment}`);
+    router.push(`/order-request?ref=${encodeURIComponent(reference)}&fulfillment=${form.fulfillment}`);
   }
 
   if (lines.length === 0 && step < STEPS.length) {

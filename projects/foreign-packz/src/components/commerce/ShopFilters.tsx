@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { Button } from '@/components/ui/Button';
@@ -32,14 +33,18 @@ const PRICE_RANGES = [
  * the live inventory system so a customer never sees a stale quantity.
  */
 export function ShopFilters({
-  products, initialCategory, initialSort, brands, formats,
+  products, brands, formats,
 }: {
   products: Product[];
-  initialCategory?: string;
-  initialSort?: string;
   brands: string[];
   formats: string[];
 }) {
+  // Deep links such as /shop?category=flower are read here rather than on the server, so
+  // the menu stays a static document.
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') ?? undefined;
+  const initialSort = searchParams.get('sort') ?? undefined;
+
   const [category, setCategory] = useState<CatalogCategory | 'all'>(
     (CATEGORIES.some((c) => c.slug === initialCategory) ? (initialCategory as CatalogCategory) : 'all'),
   );

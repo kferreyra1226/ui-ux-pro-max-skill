@@ -11,10 +11,18 @@ and streetwear brand. Next.js App Router, TypeScript, Tailwind CSS, mock data th
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm run build      # production build
-npm run typecheck  # tsc --noEmit
+npm run dev            # http://localhost:3000
+npm run build          # static export to out/
+npm run build:preview  # static export, prepared for any static host
+npm run typecheck      # tsc --noEmit
 ```
+
+The prototype has no server, so it builds to plain static files (`output: 'export'`) and
+can be served from any static host: `npx serve out` or `python3 -m http.server` inside
+`out/`. `build:preview` additionally renames Next's `_next` asset directory to `assets`
+and drops the legacy `noModule` polyfill chunk, for hosts that reject underscore-prefixed
+paths. A production build would drop the static export entirely, because age gating,
+inventory checks, order persistence and every permission check have to run on a server.
 
 ---
 
@@ -69,7 +77,7 @@ ring on every interactive element, a skip link, focus trapping in dialogs, and
 | `/apparel/[slug]` | Apparel detail with sizes, fit, material, care, shipping and returns |
 | `/cart` | Full cart, cannabis and shippable items grouped separately |
 | `/checkout` | Five-step order request: details, fulfillment, review, payment placeholder, submit |
-| `/order-request/[reference]` | Confirmation, status tracker and notification placeholders |
+| `/order-request?ref=…` | Confirmation, status tracker and notification placeholders |
 | `/about` | Brand story, responsible-use commitments, licence placeholders, community |
 | `/faq` | Searchable FAQ across five categories |
 | `/support` | Contact form, support hours, order help, privacy and safety notices |

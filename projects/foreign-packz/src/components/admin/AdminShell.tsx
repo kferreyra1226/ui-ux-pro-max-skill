@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { useAdminSession } from '@/context/AdminSessionContext';
 import { LEGAL } from '@/lib/config';
-import { cx } from '@/lib/format';
+import { cx, isRoute } from '@/lib/format';
 import { ROLE_LABELS } from '@/lib/mock/staff';
 import type { Permission, StaffRole } from '@/lib/types';
 
@@ -180,7 +180,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
       >
         <ul className="grid grid-cols-4">
           {MOBILE_TABS.map((tab) => {
-            const active = tab.href === '/admin' ? pathname === '/admin' : pathname.startsWith(tab.href);
+            const active = tab.href === '/admin'
+              ? isRoute(pathname, '/admin')
+              : pathname.startsWith(tab.href);
             return (
               <li key={tab.href}>
                 <Link
@@ -205,7 +207,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
 function NavLink({
   item, pathname, onNavigate,
 }: { item: NavItem; pathname: string; onNavigate?: () => void }) {
-  const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
+  const active = item.href === '/admin'
+    ? isRoute(pathname, '/admin')
+    : pathname.startsWith(item.href);
   return (
     <li>
       <Link
