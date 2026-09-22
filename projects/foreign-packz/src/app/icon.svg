@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Foreign Packz">
+  <rect width="64" height="64" fill="#101010"/>
+  <rect x="3" y="3" width="58" height="58" fill="none" stroke="#1C614A" stroke-width="2"/>
+  <path d="M14 46V18h20v7H22v5h10v7H22v9z" fill="#F4F0E8"/>
+  <path d="M38 46V18h12c5 0 9 4 9 9s-4 9-9 9h-5v10zm7-17h4a2.5 2.5 0 000-5h-4z" fill="#B6D85C"/>
+</svg>
