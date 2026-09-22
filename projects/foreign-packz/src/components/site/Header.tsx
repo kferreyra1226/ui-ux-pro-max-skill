@@ -41,7 +41,7 @@ export function Header() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-ink-line bg-ink/92 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-ink-line bg-ink">
         <div className="fp-shell flex h-16 items-center justify-between gap-4 md:h-[72px]">
           <Link
             href="/"

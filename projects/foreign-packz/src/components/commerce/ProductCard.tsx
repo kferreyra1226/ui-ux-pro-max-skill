@@ -39,22 +39,32 @@ export function ProductCard({ product, className }: { product: Product; classNam
             ratio="portrait"
             className="transition-transform duration-500 ease-fp group-hover:scale-[1.03]"
           />
-          <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-            {product.featured ? <TagBadge tone="bone">Featured</TagBadge> : null}
-            {product.isNew ? <TagBadge tone="acid">New</TagBadge> : null}
-          </div>
-          <div className="absolute right-3 top-3">
-            <StockBadge status={status} />
+          {/* Stock status is the actionable badge, so it keeps the corner at every width.
+              Featured and New appear from sm: up, where two badges fit side by side without
+              colliding on the two-column phone grid. */}
+          <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-1.5">
+            <div className="hidden flex-wrap gap-1.5 sm:flex">
+              {product.featured ? <TagBadge tone="bone">Featured</TagBadge> : null}
+              {product.isNew ? <TagBadge tone="acid">New</TagBadge> : null}
+            </div>
+            <StockBadge status={status} className="ml-auto" />
           </div>
         </Link>
 
         <div className="flex flex-1 flex-col gap-3 p-4">
-          <div className="flex items-center gap-2">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-chrome-dim">
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 text-[10px] uppercase leading-relaxed tracking-[0.08em] text-chrome-dim sm:text-[11px] sm:tracking-[0.16em]">
               {product.brand} &middot; {categoryLabel(product.category)}
             </p>
-            {isCannabis ? <AgeBadge /> : null}
+            {isCannabis ? <AgeBadge className="shrink-0" /> : null}
           </div>
+          {/* Featured and New move inline on a phone, where the image corner has no room. */}
+          {product.featured || product.isNew ? (
+            <div className="flex flex-wrap gap-1.5 sm:hidden">
+              {product.featured ? <TagBadge tone="bone">Featured</TagBadge> : null}
+              {product.isNew ? <TagBadge tone="acid">New</TagBadge> : null}
+            </div>
+          ) : null}
 
           <h3 className="text-[17px] leading-tight">
             <Link href={href} className="transition-colors hover:text-acid">
