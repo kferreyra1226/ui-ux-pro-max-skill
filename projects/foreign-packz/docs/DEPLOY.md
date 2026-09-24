@@ -1,5 +1,15 @@
 # Putting Foreign Packz online
 
+**Currently live at https://foreignpackz.netlify.app** (customer site) and
+**https://foreignpackz.netlify.app/admin/login/** (staff dashboard, unlisted).
+
+That deployment was made by dragging the build onto Netlify Drop. **It is a one-off
+upload and is not connected to this repository**, so pushing a commit will not update it.
+To publish a change, either rebuild and drag `out/` again, or connect the repo to Netlify
+using the settings in Option 3 below so it redeploys on every push.
+
+---
+
 The prototype builds to plain static files, so it runs on any static host. Pick whichever
 of these fits. All three give a public URL you can send to anyone.
 
