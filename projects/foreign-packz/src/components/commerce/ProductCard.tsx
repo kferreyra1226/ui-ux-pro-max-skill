@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { BrandImage } from '@/components/ui/BrandImage';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { StockBadge, TagBadge } from '@/components/ui/Badge';
 import { AgeBadge } from '@/components/ui/Notice';
 import { RestockModal } from '@/components/commerce/RestockModal';
@@ -11,6 +11,7 @@ import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
 import { isPurchasable, publicStatus } from '@/lib/inventory';
 import { categoryLabel } from '@/lib/mock/catalog';
+import { shopifyProductIdFor } from '@/lib/shopify';
 import type { Product } from '@/lib/types';
 
 /**
@@ -23,6 +24,10 @@ export function ProductCard({ product, className }: { product: Product; classNam
   const [restockOpen, setRestockOpen] = useState(false);
   const status = publicStatus(product);
   const available = isPurchasable(product);
+  // Shopify owns stock, variants and the cart for apparel it is configured for. Adding
+  // such a product to this site's cart would strand it somewhere that cannot take payment,
+  // so the card sends the customer to the product page and its Shopify buy button instead.
+  const soldByShopify = shopifyProductIdFor(product.slug, product.productClass) !== null;
   const isCannabis = product.productClass === 'cannabis';
   const href = product.productClass === 'apparel' ? `/apparel/${product.slug}` : `/shop/${product.slug}`;
   const price = product.salePriceCents ?? product.priceCents;
@@ -89,7 +94,11 @@ export function ProductCard({ product, className }: { product: Product; classNam
             ) : null}
           </div>
 
-          {available ? (
+          {soldByShopify ? (
+            <ButtonLink href={href} size="sm" fullWidth>
+              View product
+            </ButtonLink>
+          ) : available ? (
             <Button size="sm" fullWidth onClick={() => addItem(product, 1)}>
               Add to Cart
             </Button>

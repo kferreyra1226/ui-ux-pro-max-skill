@@ -4,11 +4,23 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { QuantityStepper } from '@/components/commerce/QuantityStepper';
 import { RestockModal } from '@/components/commerce/RestockModal';
+import { ShopifyBuyButton } from '@/components/commerce/ShopifyBuyButton';
 import { useCart } from '@/context/CartContext';
 import { clampStock, isPurchasable } from '@/lib/inventory';
+import { shopifyProductIdFor } from '@/lib/shopify';
 import type { Product } from '@/lib/types';
 
-/** Purchase controls. A sold-out product offers a restock notification and nothing else. */
+/**
+ * Purchase controls.
+ *
+ * A sold-out product offers a restock notification and nothing else.
+ *
+ * Apparel with a configured Shopify product takes card payment through Shopify's Buy
+ * Button. Everything else — cannabis and accessories — uses this site's own cart, which
+ * for cannabis leads to an owner-approved request paid in cash, never a card checkout.
+ * `shopifyProductIdFor` returns null for any non-apparel product, so that routing cannot
+ * be got wrong from here.
+ */
 export function AddToCartPanel({ product, sizes }: { product: Product; sizes?: string[] }) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -17,6 +29,7 @@ export function AddToCartPanel({ product, sizes }: { product: Product; sizes?: s
   const [added, setAdded] = useState(false);
   const available = isPurchasable(product);
   const stock = clampStock(product.stockQuantity);
+  const shopifyProductId = shopifyProductIdFor(product.slug, product.productClass);
 
   if (!available) {
     return (
@@ -40,6 +53,12 @@ export function AddToCartPanel({ product, sizes }: { product: Product; sizes?: s
         />
       </>
     );
+  }
+
+  // Shopify owns the variant selector, stock and price for apparel it is configured for,
+  // so this site does not render a second set of controls that could disagree with it.
+  if (shopifyProductId) {
+    return <ShopifyBuyButton productId={shopifyProductId} productName={product.name} />;
   }
 
   return (
