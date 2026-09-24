@@ -1,0 +1,91 @@
+# Publishes the Foreign Packz prototype to GitHub Pages.
+#
+# It serves from a sub-path so it does not take over this repository's Pages root:
+#   https://<owner>.github.io/<repo>/foreign-packz/
+#
+# One-time setup: repository Settings -> Pages -> Build and deployment -> Source:
+# "GitHub Actions". Until that is set, this workflow builds but cannot deploy.
+name: Deploy Foreign Packz
+
+on:
+  push:
+    # The feature branch is included so the prototype can go live before it is merged.
+    # Drop it once this work lands on main.
+    branches: [main, claude/foreign-packz-ecommerce-4fy4oi]
+    paths:
+      - 'projects/foreign-packz/**'
+      - '.github/workflows/deploy-foreign-packz.yml'
+  workflow_dispatch:
+
+# Read the repo, write the Pages deployment, and mint the OIDC token Pages requires.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/foreign-packz
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/foreign-packz/package-lock.json
+
+      - run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build static site
+        # basePath must match the URL the site is served from, or every asset 404s.
+        run: npm run build:preview
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/foreign-packz
+
+      - name: Assemble the Pages root
+        run: |
+          mkdir -p ../../_site/foreign-packz
+          cp -r out/. ../../_site/foreign-packz/
+          # Stop GitHub Pages running Jekyll over the build output.
+          touch ../../_site/.nojekyll
+          # Send the Pages root to the site rather than showing a bare 404.
+          cat > ../../_site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <title>Foreign Packz</title>
+              <meta http-equiv="refresh" content="0; url=./foreign-packz/" />
+              <link rel="canonical" href="./foreign-packz/" />
+            </head>
+            <body>
+              <p><a href="./foreign-packz/">Continue to Foreign Packz</a></p>
+            </body>
+          </html>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

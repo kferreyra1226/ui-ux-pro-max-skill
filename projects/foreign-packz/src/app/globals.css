@@ -1,0 +1,197 @@
+/*
+ * Foreign Packz - global design system.
+ * Display face: Anton (condensed editorial / streetwear).
+ * Body face:    Inter (clean, highly readable for product detail, forms, checkout).
+ * Both faces are self-hosted from /public/fonts (SIL Open Font License) rather than
+ * loaded from a third-party CDN. That removes a render-blocking external request and
+ * keeps browsing this cannabis menu from being visible to another party.
+ * latin subset only, woff2, ~67 KB for both.
+ *
+ * The files live beside this stylesheet in src/app/fonts rather than in public/, so the
+ * bundler emits them and rewrites the URL with whatever base path the site is built for.
+ * An absolute "/fonts/..." path silently 404s when the site is served from a sub-path,
+ * such as a GitHub Pages project URL, and the brand typeface quietly disappears.
+ */
+
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/anton-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/inter-latin-var.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --fp-font-display: 'Anton';
+    --fp-font-body: 'Inter';
+
+    /* Surface + accent tokens (kept in sync with tailwind.config.ts) */
+    --fp-ink: #101010;
+    --fp-ink-soft: #171717;
+    --fp-ink-card: #1b1b1b;
+    --fp-ink-line: #2a2a2a;
+    --fp-bone: #f4f0e8;
+    --fp-emerald: #1c614a;
+    --fp-chrome: #b7b7b7;
+    --fp-acid: #b6d85c;
+
+    /* Spacing scale - 4px base, used for section rhythm */
+    --fp-gutter: 20px;
+    --fp-section: 64px;
+
+    /* Safe-area aware bottom inset for the sticky iPhone tab bar */
+    --fp-tabbar: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --fp-gutter: 32px;
+      --fp-section: 96px;
+    }
+  }
+
+  * {
+    @apply border-ink-line;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  body {
+    @apply bg-ink font-sans text-bone antialiased;
+    /* Prevent accidental pull-to-refresh inside scroll panes (UX guideline: Touch) */
+    overscroll-behavior-y: contain;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  .fp-display {
+    font-family: var(--fp-font-display), Impact, Haettenschweiler, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    font-weight: 400; /* Anton ships a single weight */
+  }
+
+  /* Visible, high-contrast focus for every interactive element (a11y baseline) */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--fp-acid);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--fp-emerald);
+    color: #fff;
+  }
+}
+
+@layer components {
+  .fp-shell {
+    @apply mx-auto w-full max-w-shell;
+    padding-left: var(--fp-gutter);
+    padding-right: var(--fp-gutter);
+  }
+
+  .fp-section {
+    padding-top: var(--fp-section);
+    padding-bottom: var(--fp-section);
+  }
+
+  /* Eyebrow / kicker label above section headings */
+  .fp-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-chrome;
+  }
+
+  /* Hairline card used across product, editorial and admin surfaces */
+  .fp-card {
+    @apply rounded-lg border border-ink-line bg-ink-card shadow-card;
+  }
+
+  .fp-card-bone {
+    @apply rounded-lg border border-bone-line bg-white shadow-bone;
+  }
+
+  /* Subtle film grain - a single inline SVG, no image request, no layout cost */
+  .fp-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+  }
+
+  /* Map / grid inspired line texture used behind editorial blocks */
+  .fp-grid-lines {
+    background-image: linear-gradient(to right, rgba(183, 183, 183, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(183, 183, 183, 0.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Metallic chrome rule used as a refined divider */
+  .fp-chrome-rule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(183, 183, 183, 0.55) 18%,
+      rgba(244, 240, 232, 0.7) 50%,
+      rgba(183, 183, 183, 0.55) 82%,
+      transparent
+    );
+  }
+
+  /* Horizontal snap rail for the "Popular Right Now" carousel */
+  .fp-rail {
+    @apply flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .fp-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .fp-rail > * {
+    @apply snap-start;
+  }
+
+  .fp-skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-acid focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink;
+  }
+}
